@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 
@@ -12,7 +13,7 @@ Headers:
  'keypage', 'advertiser', 'usertag']
 '''
 
-df = pd.read_csv("../datasets/we_data/small.csv")
+df = pd.read_csv("../datasets/we_data/train.csv")
 
 '''
 Gets stats for each advertiser id
@@ -78,7 +79,7 @@ def initialise_stats_table():
 """
 Prints the basic stat tablle
 """
-def create_basic_stats_table():
+def print_basic_stats_table():
 
     stats_table = initialise_stats_table()
     # Get advertiser keys
@@ -89,4 +90,95 @@ def create_basic_stats_table():
 
     print(stats_table)
 
-create_basic_stats_table()
+"""
+Create and save ctr/weekday graph
+"""
+def create_ctr_weekday_graph():
+
+    df_1 = df[df['advertiser'] == 2259]
+
+    weekdays = list(range(0,7))
+    y = []
+
+    for day in weekdays:
+        day_df = df_1[df_1['weekday'] == day]
+
+        if day_df.empty:
+            y.append(0)
+            continue
+
+        ctr = get_ctr(day_df)
+        y.append(ctr)
+
+    print(weekdays, y)
+
+    plt.plot(weekdays,y)
+    plt.ylabel("CTR")
+    plt.xlabel("Weekday")
+    plt.savefig("ctr_weekday.png")
+
+"""
+Create and save ctr/hourly graph
+"""
+def create_ctr_hourly_graph():
+    df_1 = df[df['advertiser'] == 2259]
+
+    hours = list(range(0,25))
+    y = []
+
+    for hour in hours:
+        day_df = df_1[df_1['hour'] == hour]
+
+        if day_df.empty:
+            y.append(0)
+            continue
+
+        ctr = get_ctr(day_df)
+        y.append(ctr)
+
+    print(hours, y)
+
+    plt.plot(hours,y)
+    plt.ylabel("CTR")
+    plt.xlabel("Hours")
+    plt.savefig("ctr_hours.png")
+
+"""
+Create and save ctr/ad exchange graph
+"""
+def create_ctr_ad_exchange_graph():
+    df_1 = df[df['advertiser'] == 2259]
+
+    exchange_list = list(range(0,4))
+    y = []
+
+    for ad_exchange in exchange_list:
+        day_df = df_1[df_1['adexchange'] == ad_exchange]
+
+        if day_df.empty:
+            y.append(0)
+            continue
+
+        ctr = get_ctr(day_df)
+        y.append(ctr)
+
+    plt.bar(exchange_list,y)
+    plt.ylabel("CTR")
+    plt.xlabel("Ad exchange")
+    plt.savefig("ctr_adexchange.png")
+
+
+"""
+Get CTR given a filtered df
+"""
+def get_ctr(partial_df):
+    num_of_impressions = partial_df['click'].count()
+    grouping_of_clicks = partial_df.groupby('click').size()
+    num_of_clicks = num_of_impressions - grouping_of_clicks[0]
+    ctr = num_of_clicks / num_of_impressions
+    return ctr
+
+print_basic_stats_table()
+#create_ctr_weekday_graph()
+#create_ctr_hourly_graph()
+#create_ctr_ad_exchange_graph()
