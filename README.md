@@ -1,6 +1,6 @@
 # WebEconCW
 
-Repo for WebEconomics Coursework 
+Repo for WebEconomics Coursework
 
 ## Installation & Set up
 
@@ -10,7 +10,7 @@ Create a virtual env for dependency management and activate it
 
 Install dependencies from the requirements file using pip. (it includes some useful libraries pandas, numpys, etc..)
 
-```python 
+```python
 virtualenv env
 source env/bin/activate
 pip install -r requirements.txt
@@ -18,6 +18,20 @@ pip install -r requirements.txt
 Code for each part of the coursework is split up in corresponding folders, e.g `/part1` for part 1.
 
 ## Part 1: Data exploration
+
+```python
+python explore.py
+```
+
+Includes:
+- Basic stats (num Imps, num Clicks, Cost, CTR, avg CPM, eCPC )
+- CTR/Weekday Graph
+- CTR/Hour Graph
+- CTR/OS & CTR/Browser
+- CTR/Region
+- CTR/Slot Size
+- CTR/Ad Exchange
+- CTR/Tag
 
 ## Part 2: Basic bidding strategies
 
