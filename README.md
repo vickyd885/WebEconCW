@@ -27,11 +27,11 @@ Includes:
 - Basic stats (num Imps, num Clicks, Cost, CTR, avg CPM, eCPC )
 - CTR/Weekday Graph
 - CTR/Hour Graph
-- CTR/OS & CTR/Browser
-- CTR/Region
-- CTR/Slot Size
-- CTR/Ad Exchange
-- CTR/Tag
+- CTR/Browser Graph
+- CTR/Region Graph
+- CTR/Ad Exchange Graph
+
+Graphs are saved in `part1/`
 
 ## Part 2: Basic bidding strategies
 
