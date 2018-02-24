@@ -91,163 +91,49 @@ def print_basic_stats_table():
     print(stats_table)
 
 """
-Create and save ctr/weekday graph
+Gets CTR info given an advertiser_id and a topic
+Returns a tuple (x,y) where x and y are axis data for the graph
 """
-def create_ctr_weekday_graph():
-
-    df_1 = df[df['advertiser'] == 2259]
-
-    weekdays = list(range(0,7))
-    y = []
-
-    for day in weekdays:
-        day_df = df_1[df_1['weekday'] == day]
-
-        if day_df.empty:
-            y.append(0)
-            continue
-
-        ctr = get_ctr(day_df)
-        y.append(ctr)
-
-    print(weekdays, y)
-
-    plt.plot(weekdays,y)
-    plt.ylabel("CTR")
-    plt.xlabel("Weekday")
-    plt.savefig("ctr_weekday.png")
-
-"""
-Create and save ctr/hourly graph
-"""
-def create_ctr_hourly_graph():
-    df_1 = df[df['advertiser'] == 2259]
-
-    hours = list(range(0,25))
-    y = []
-
-    for hour in hours:
-        day_df = df_1[df_1['hour'] == hour]
-
-        if day_df.empty:
-            y.append(0)
-            continue
-
-        ctr = get_ctr(day_df)
-        y.append(ctr)
-
-    print(hours, y)
-
-    plt.plot(hours,y)
-    plt.ylabel("CTR")
-    plt.xlabel("Hours")
-    plt.savefig("ctr_hours.png")
-
-"""
-Create and save ctr/ad exchange graph
-"""
-def create_ctr_ad_exchange_graph():
-    df_1 = df[df['advertiser'] == 2259]
-
-    exchange_list = list(range(0,4))
-    y = []
-
-    for ad_exchange in exchange_list:
-        day_df = df_1[df_1['adexchange'] == ad_exchange]
-
-        if day_df.empty:
-            y.append(0)
-            continue
-
-        ctr = get_ctr(day_df)
-        y.append(ctr)
-
-    plt.bar(exchange_list,y)
-    plt.ylabel("CTR")
-    plt.xlabel("Ad exchange")
-    plt.savefig("ctr_adexchange.png")
-
-"""
-Create and save ctr/region graph for 1 advertiser
-too many tags, dont use this!
-"""
-def create_ctr_region_graph():
-    df_1 = df[df['advertiser'] == 1458]
-
-    regions = dict(df_1.groupby('region').apply(list))
+def get_ctr_info_for_advertiser(advertiser_id, grouping_topic):
+    df_1 = df[df['advertiser'] == advertiser_id]
+    keys = dict(df_1.groupby(grouping_topic).apply(list))
     x = []
     y = []
-    for r in regions:
+    for k in keys:
 
-        region_df = df_1[df_1['region'] == r]
+        k_df = df_1[df_1[grouping_topic] == k]
 
-        if region_df.empty:
+        if k_df.empty:
             continue
 
-        ctr = get_ctr(region_df)
+        ctr = get_ctr(k_df)
 
         y.append(ctr)
-        x.append(r)
+        x.append(k)
 
-    plt.bar(x, y)
-    plt.ylabel("CTR")
-    plt.xlabel("Region")
-    plt.savefig("ctr_region.png")
+    return (x,y)
 
-"""
-Create and save ctr/tag graph for 1 advertiser
-"""
-def create_ctr_tag_graph():
-    df_1 = df[df['advertiser'] == 1458]
-
-    tags = dict(df_1.groupby('usertag').apply(list))
-    x = []
-    y = []
-    print(len(tags))
-    for t in tags:
-
-        tag_df = df_1[df_1['usertag'] == t]
-
-        if tag_df.empty:
-            continue
-
-        ctr = get_ctr(tag_df)
-
-        y.append(ctr)
-        x.append(t)
-
-    plt.bar(x, y)
-    plt.ylabel("CTR")
-    plt.xlabel("Tag")
-    plt.savefig("ctr_tag.png")
 
 
 """
-Create and Save Browser Graph
+Create and save ctr graph given a list of advertiser id, topic,
+axis labels and file names
 """
-def create_ctr_browser_graph():
-    df_1 = df[df['advertiser'] == 1458]
+def create_and_save_ctr_graph(advertisers, topic, xlabel, ylabel, filename):
 
-    agents = dict(df_1.groupby('useragent').apply(list))
-    x = []
-    y = []
-    for agent in agents:
+    advertiser_data = []
 
-        agent_df = df_1[df_1['useragent'] == agent]
+    for advertiser in advertisers:
+        advertiser_data.append(get_ctr_info_for_advertiser(advertiser, topic))
 
-        if agent_df.empty:
-            continue
+    for data in advertiser_data:
+        plt.plot(data[0], data[1])
 
-        ctr = get_ctr(agent_df)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    plt.savefig(filename)
 
-        y.append(ctr)
-        x.append(agent)
-
-    plt.bar(x, y)
-    plt.ylabel("CTR")
-    plt.xlabel("Browser")
-    plt.savefig("ctr_browser.png")
-
+    plt.gcf().clear()
 
 """
 Handle grouping_of_clicks edge cases
@@ -271,10 +157,15 @@ def get_ctr(partial_df):
     ctr = num_of_clicks / num_of_impressions
     return ctr
 
-#print_basic_stats_table()
-#create_ctr_weekday_graph()
-#create_ctr_hourly_graph()
-#create_ctr_ad_exchange_graph()
-#create_ctr_region_graph()
-#create_ctr_tag_graph()
-create_ctr_browser_graph()
+
+
+print_basic_stats_table()
+
+advertiser_list = [ 1458, 2259 ]
+
+# Create advertiser graphs
+create_and_save_ctr_graph(advertiser_list,'useragent','user agents', 'CTR', 'ctr_usergent.png')
+create_and_save_ctr_graph(advertiser_list,'region','Region', 'CTR', 'ctr_region.png')
+create_and_save_ctr_graph(advertiser_list,'adexchange','Adexchange', 'CTR', 'ctr_adexchange.png')
+create_and_save_ctr_graph(advertiser_list,'hour','Hour', 'CTR', 'ctr_hour.png')
+create_and_save_ctr_graph(advertiser_list,'weekday','Weekday', 'CTR', 'ctr_weekday.png')
