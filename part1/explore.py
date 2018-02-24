@@ -167,6 +167,98 @@ def create_ctr_ad_exchange_graph():
     plt.xlabel("Ad exchange")
     plt.savefig("ctr_adexchange.png")
 
+"""
+Create and save ctr/region graph for 1 advertiser
+too many tags, dont use this!
+"""
+def create_ctr_region_graph():
+    df_1 = df[df['advertiser'] == 1458]
+
+    regions = dict(df_1.groupby('region').apply(list))
+    x = []
+    y = []
+    for r in regions:
+
+        region_df = df_1[df_1['region'] == r]
+
+        if region_df.empty:
+            continue
+
+        ctr = get_ctr(region_df)
+
+        y.append(ctr)
+        x.append(r)
+
+    plt.bar(x, y)
+    plt.ylabel("CTR")
+    plt.xlabel("Region")
+    plt.savefig("ctr_region.png")
+
+"""
+Create and save ctr/tag graph for 1 advertiser
+"""
+def create_ctr_tag_graph():
+    df_1 = df[df['advertiser'] == 1458]
+
+    tags = dict(df_1.groupby('usertag').apply(list))
+    x = []
+    y = []
+    print(len(tags))
+    for t in tags:
+
+        tag_df = df_1[df_1['usertag'] == t]
+
+        if tag_df.empty:
+            continue
+
+        ctr = get_ctr(tag_df)
+
+        y.append(ctr)
+        x.append(t)
+
+    plt.bar(x, y)
+    plt.ylabel("CTR")
+    plt.xlabel("Tag")
+    plt.savefig("ctr_tag.png")
+
+
+"""
+Create and Save Browser Graph
+"""
+def create_ctr_browser_graph():
+    df_1 = df[df['advertiser'] == 1458]
+
+    agents = dict(df_1.groupby('useragent').apply(list))
+    x = []
+    y = []
+    for agent in agents:
+
+        agent_df = df_1[df_1['useragent'] == agent]
+
+        if agent_df.empty:
+            continue
+
+        ctr = get_ctr(agent_df)
+
+        y.append(ctr)
+        x.append(agent)
+
+    plt.bar(x, y)
+    plt.ylabel("CTR")
+    plt.xlabel("Browser")
+    plt.savefig("ctr_browser.png")
+
+
+"""
+Handle grouping_of_clicks edge cases
+"""
+def get_click_count(grouping_of_clicks):
+    #print(grouping_of_clicks)
+    num_of_clicks = 0
+    if 0 in grouping_of_clicks:
+        return grouping_of_clicks[0]
+    else:
+        return grouping_of_clicks[1]
 
 """
 Get CTR given a filtered df
@@ -174,11 +266,15 @@ Get CTR given a filtered df
 def get_ctr(partial_df):
     num_of_impressions = partial_df['click'].count()
     grouping_of_clicks = partial_df.groupby('click').size()
-    num_of_clicks = num_of_impressions - grouping_of_clicks[0]
+
+    num_of_clicks = get_click_count(grouping_of_clicks)
     ctr = num_of_clicks / num_of_impressions
     return ctr
 
-print_basic_stats_table()
+#print_basic_stats_table()
 #create_ctr_weekday_graph()
 #create_ctr_hourly_graph()
 #create_ctr_ad_exchange_graph()
+#create_ctr_region_graph()
+#create_ctr_tag_graph()
+create_ctr_browser_graph()
