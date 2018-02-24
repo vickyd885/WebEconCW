@@ -103,3 +103,4 @@ ENV/
 # Other
 .DS_Store
 datasets/
+part1/*.png
