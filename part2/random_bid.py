@@ -1,6 +1,7 @@
 import sys
 import os
 
+from random import randint
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,21 +10,21 @@ import matplotlib.pyplot as plt
 # test_data = pd.read_csv("test.csv")
 validate_data = pd.read_csv("validation.csv")
 
-def constant_bidding(const):
+def random_bidding(min_bound, max_bound):
 	impressions = 0
-	clicks = 0
 	cost = 0
+	clicks = 0
 	budget = 6250000
 
 	for index, row in validate_data.iterrows():
-		if const > row['payprice']:
+		bid = randint(min_bound, max_bound)
+		if bid > row['payprice']:
 			impressions += 1
 			clicks += row['click']
 			cost += row['payprice']
 		if cost >= budget:
 			# print("Elapsed budget")
 			break
-
 	return impressions, cost, clicks
 
 num_valid_impressions = validate_data.shape[0]
@@ -35,6 +36,7 @@ if min_value % 2 == 1:
 max_value = validate_data['bidprice'].max()
 
 results = pd.DataFrame()
+
 results['constants'] = np.arange(min_value, max_value, 2)
 
 impressions = []
@@ -43,7 +45,7 @@ clicks = []
 
 for const in results['constants']:
 	print(const)
-	const_impressions, const_cost, const_clicks = constant_bidding(const)
+	const_impressions, const_cost, const_clicks = random_bidding(min_value, const)
 	impressions.append(const_impressions)
 	cost.append(const_cost)
 	clicks.append(const_clicks)
@@ -59,4 +61,4 @@ results['CVR'] = (results['clicks']/total_num_clicks)*100
 results['CPM'] = (results['cost']/results['impressions'])
 results['eCPC'] = (results['cost']/results['clicks'])*100 
 
-results.to_csv("constant_bid_output.csv")
+results.to_csv("random_bid_output.csv")
