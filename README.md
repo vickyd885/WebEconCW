@@ -15,7 +15,10 @@ virtualenv env
 source env/bin/activate
 pip install -r requirements.txt
 ```
-Code for each part of the coursework is split up in corresponding folders, e.g `/part1` for part 1.
+
+Once installed, you can launch Jupyter Notebook calling `$ jupyter notebook` and select the `Bidding Models` notebook for part 2, 3, 4 and 5.
+
+Initial data exploration is in `/part1`
 
 ## Part 1: Data exploration
 
@@ -32,11 +35,3 @@ Includes:
 - CTR/Ad Exchange Graph
 
 Graphs are saved in `part1/`
-
-## Part 2: Basic bidding strategies
-
-## Part 3: Linear bidding strategy
-
-## Part 4: Your best bidding strategy
-
-## Part 5: A further developed bidding strategy
