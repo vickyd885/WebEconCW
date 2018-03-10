@@ -26,6 +26,8 @@ if min_value % 2 == 1:
 
 max_value = validate_data['bidprice'].max()
 
+
+
 """
 
 ### Constant Bidding
@@ -161,14 +163,13 @@ print("Finishing random bidding process")
 """
 
 # We select fields we are interested in
-features = ['click', 'weekday', 'hour', 'useragent',
+features = [ 'weekday', 'hour',
 'region', 'city',
  'slotwidth', 'slotheight', 'slotvisibility',
 'slotformat']
 
 # Get a list of columns to delete from the dataset
 unused_fields = [x for x in list(training_data) if x not in features]
-
 
 # print(unused_fields)
 
@@ -185,38 +186,57 @@ def encode_df(raw_df):
     label_encoder = LabelBinarizer() # Uses SKLearn Label Binary Encoder
     for field in features:
         if not field in encoded_df:
+            print(field, "not found")
             continue
         encoded_df[field] = label_encoder.fit_transform(encoded_df[field])
+
 
     return encoded_df
 
 
-
-# Encode the DFs
+# # Encode the DFs
 X_train = encode_df(training_data)
 X_validate = encode_df(validate_data)
 X_test = encode_df(testing_data)
-
+#
 Y_train = training_data.click
 Y_validate = validate_data.click
 
 print("Finish feature encoding")
-
 ################################################################################################################################
 
+
+####
 # Declare the logistic model
-logistic = linear_model.LogisticRegression()
+logistic = linear_model.LogisticRegression(class_weight='balanced', C = 0.001)
 
 # Fit the data
+ysef = [x for x in list(X_train) if x not in X_validate]
+print(ysef)
+
 logistic.fit(X_train, Y_train)
 
 # Print accuracy by testing against validation set
 print('Logistic Regression Accuracy: %f'
       % logistic.score(X_validate, Y_validate))
 
-test_set_predictions_logistic = logistic.predict(X_validate)
+test_set_predictions_logistic = logistic.predict_proba(X_validate)
 
-print(test_set_predictions_logistic)
+pCTR = pd.DataFrame(test_set_predictions_logistic)
+
+predictions = []
+
+a = len(training_data) / 2 * np.bincount(training_data.click)
+w = a[1] / a[0]
+
+for p in pCTR[1]:
+    predictions.append( p / (p + ((1-p)/w)))
+
+pCTR.to_csv("predicted_values_lr.csv")
+pd.DataFrame(predictions).to_csv("adjusted_pred_lr.csv")
+
+
+#print(test_set_predictions_logistic)
 
 ################################################################################################################################
 
@@ -231,7 +251,11 @@ print(test_set_predictions_logistic)
 
 ################################################################################################################################
 
-avg_ctr = training_data['click'].sum() / len(training_data.groupby('click').get_group(1))
+avg_ctr = training_data['click'].sum() / len(training_data['bidid'])
+
+
+print("Total impressions: ", len(training_data['bidid']), " Total clicks: ",training_data['click'].sum() )
+print("Avg ctr: ", avg_ctr)
 
 def linear_bidding(lower_limit, upper_limit, increment, predictions):
     base_bids = np.arange(lower_limit, upper_limit, increment)
@@ -239,8 +263,10 @@ def linear_bidding(lower_limit, upper_limit, increment, predictions):
 
     for base_bid in base_bids:
         for i in range(0, len(predictions)):
+            #print("Base bid: %f, pCTR: %f, avg_ctr: %f",base_bid, predictions[i], avg_ctr)
             bid = base_bid * (predictions[i] / avg_ctr)
             bids.append(bid)
+            print("New bid: ", bid)
 
     bid_groups = [bids[x:x+len(predictions)] for x in range(0, len(bids), len(predictions))]
     return bid_groups, base_bids
@@ -250,25 +276,28 @@ def placing_bids(bids):
     clicks = 0
     cost = 0
     budget = 6250000
-
+    bool_check = bids >= validate_data.payprice
     for i in range(0, len(bids)):
         # Don't exceed budget
         if cost >= budget:
         # print("Elapsed budget")
             break
 
-        if bids[i] >= validate_data['payprice'][i]:
+        if bool_check[i] == True:
             impressions += 1
             clicks += validate_data['click'][i]
             cost += validate_data['payprice'][i]
+            #print(validate_data['payprice'][i])
 
     return impressions, clicks, cost
 
 def evaluate_bid_strategy(strategy, prediction_Set):
-    # min_value = 2
-    # max_value = 302
-    # increment = 2
+    min_value = 2
+    max_value = 302
+    increment = 2
+    print("Generating bids")
     bid_groups, base_bids = linear_bidding(min_value,max_value,2,prediction_Set)
+    print("Finished generating bids")
 
     impressions = []
     total_clicks = []
@@ -279,7 +308,7 @@ def evaluate_bid_strategy(strategy, prediction_Set):
     results_df['bid'] = base_bids
     #results_df['strategy'] = strategy
 
-    print(results_df)
+    # print(results_df)
 
     for bids in bid_groups:
         [imps, clicks, cost] = placing_bids(bids)
@@ -303,9 +332,9 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 
 print("starting linear bidding with LR")
-linear_bidding_results_df = evaluate_bid_strategy("linear", test_set_predictions_logistic)
+linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
 
-print(linear_bidding_results_df)
+# print(linear_bidding_results_df)
 
 
 ################################################################################################################################
