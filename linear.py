@@ -12,31 +12,42 @@ from sklearn.metrics import accuracy_score
 from random import randint
 
 # Datasets
-validate_data = pd.read_csv("small_validation_100.csv")
-training_data = pd.read_csv("small_train_100.csv")
-testing_data = pd.read_csv("small_test_100.csv")
+# validate_data = pd.read_csv("small_validation_100.csv")
+# training_data = pd.read_csv("small_train_100.csv")
+# testing_data = pd.read_csv("small_test_100.csv")
 
+validate_data = pd.read_csv("validation.csv")
+training_data = pd.read_csv("datasets/we_data/train.csv")
+testing_data = pd.read_csv("datasets/we_data/test.csv")
+
+min_value = validate_data['payprice'].min()
+if min_value % 2 == 1:
+    min_value = min_value - 1
+
+max_value = validate_data['bidprice'].max()
+
+"""
 
 ### Constant Bidding
 def constant_bidding(const):
     impressions = 0
     clicks = 0
-    cost = 0
+    total_spend = 0
     budget = 6250000
 
     for index, row in validate_data.iterrows():
         # Don't exceed budget
-        if cost >= budget:
+        if total_spend >= budget:
         # print("Elapsed budget")
             break
 
         if const > row['payprice']:
             impressions += 1
             clicks += row['click']
-            cost += row['payprice']
+            total_spend += row['payprice']
 
 
-    return impressions, cost, clicks
+    return impressions, total_spend, clicks
 
 num_valid_impressions = validate_data.shape[0]
 
@@ -63,15 +74,15 @@ for const in results['constants']:
     clicks.append(const_clicks)
 
 results['impressions'] = impressions
-results['cost'] = cost
+results['total_spend'] = cost
 results['clicks'] = clicks
 
 total_num_clicks = len(validate_data.groupby('click').get_group(1))
 
 results['CTR'] = (results['clicks']/results['impressions'])*100
 results['CVR'] = (results['clicks']/total_num_clicks)*100
-results['CPM'] = (results['cost']/results['impressions'])
-results['eCPC'] = (results['cost']/results['clicks'])*100
+results['CPM'] = (results['total_spend']/results['impressions'])
+results['CPC'] = (results['total_spend']/results['clicks'])*100
 
 print("Finished constant bidding process")
 #print(results)
@@ -85,7 +96,7 @@ results = []
 
 def random_bidding(min_bound, max_bound):
     impressions = 0
-    cost = 0
+    total_spend = 0
     clicks = 0
     budget = 6250000
 
@@ -93,15 +104,15 @@ def random_bidding(min_bound, max_bound):
         bid = randint(min_bound, max_bound)
 
         # Don't exceed budget
-        if cost >= budget:
+        if total_spend >= budget:
         # print("Elapsed budget")
             break
         if bid > row['payprice']:
             impressions += 1
             clicks += row['click']
-            cost += row['payprice']
+            total_spend += row['payprice']
 
-    return impressions, cost, clicks
+    return impressions, total_spend, clicks
 
 num_valid_impressions = validate_data.shape[0]
 
@@ -129,15 +140,15 @@ for const in results['constants']:
     clicks.append(const_clicks)
 
 results['impressions'] = impressions
-results['cost'] = cost
+results['total_spend'] = cost
 results['clicks'] = clicks
 
 total_num_clicks = len(validate_data.groupby('click').get_group(1))
 
 results['CTR'] = (results['clicks']/results['impressions'])*100
 results['CVR'] = (results['clicks']/total_num_clicks)*100
-results['CPM'] = (results['cost']/results['impressions'])
-results['eCPC'] = (results['cost']/results['clicks'])*100
+results['CPM'] = (results['total_spend']/results['impressions'])
+results['CPC'] = (results['total_spend']/results['clicks'])*100
 
 
 random_bidding_results = results
@@ -146,6 +157,8 @@ results = []
 print("Finishing random bidding process")
 #print(results)
 #results.to_csv("random_bid_output.csv")
+
+"""
 
 # We select fields we are interested in
 features = ['click', 'weekday', 'hour', 'useragent',
@@ -207,14 +220,14 @@ print(test_set_predictions_logistic)
 
 ################################################################################################################################
 
-knn = neighbors.KNeighborsClassifier(n_neighbors=2)
-
-knn.fit(X_train, Y_train)
-
-test_set_predictions_knn = knn.predict(X_validate)
-
-#print(test_set_predictions_knn)
-print("KNN Accuracy: ",knn.score(X_validate, Y_validate))
+# knn = neighbors.KNeighborsClassifier(n_neighbors=2)
+#
+# knn.fit(X_train, Y_train)
+#
+# test_set_predictions_knn = knn.predict(X_validate)
+#
+# #print(test_set_predictions_knn)
+# print("KNN Accuracy: ",knn.score(X_validate, Y_validate))
 
 ################################################################################################################################
 
@@ -238,25 +251,24 @@ def placing_bids(bids):
     cost = 0
     budget = 6250000
 
-    valid = bids >= validate_data['payprice']
-    for i in range(0, len(valid)):
+    for i in range(0, len(bids)):
         # Don't exceed budget
         if cost >= budget:
         # print("Elapsed budget")
             break
 
-        if valid[i] == True:
+        if bids[i] >= validate_data['payprice'][i]:
             impressions += 1
             clicks += validate_data['click'][i]
             cost += validate_data['payprice'][i]
 
-    return impressions, cost, clicks
+    return impressions, clicks, cost
 
-def evaluate_bid_strategy(strategy):
-    min_value = 2
-    max_value = 302
-    increment = 2
-    bid_groups, base_bids = linear_bidding(min_value,max_value,2,test_set_predictions_knn)
+def evaluate_bid_strategy(strategy, prediction_Set):
+    # min_value = 2
+    # max_value = 302
+    # increment = 2
+    bid_groups, base_bids = linear_bidding(min_value,max_value,2,prediction_Set)
 
     impressions = []
     total_clicks = []
@@ -265,7 +277,7 @@ def evaluate_bid_strategy(strategy):
     results_df = pd.DataFrame()
 
     results_df['bid'] = base_bids
-    results_df['strategy'] = strategy
+    #results_df['strategy'] = strategy
 
     print(results_df)
 
@@ -285,12 +297,13 @@ def evaluate_bid_strategy(strategy):
     # Other metrics
     results_df['CTR'] = (results_df.clicks/results_df.impressions * 100)
     results_df['CPM'] = (results_df.clicks/results_df.impressions)
-    results_df['CPC'] = (results_df.clicks/results_df.clicks * 100)
-    results_df['eCPC'] = (results_df.total_spend/results_df.clicks * 100)
+    results_df['CPC'] = (results_df.total_spend/results_df.clicks * 100)
 
     return results_df
 
-linear_bidding_results_df = evaluate_bid_strategy("linear")
+
+print("starting linear bidding with LR")
+linear_bidding_results_df = evaluate_bid_strategy("linear", test_set_predictions_logistic)
 
 print(linear_bidding_results_df)
 
@@ -298,13 +311,18 @@ print(linear_bidding_results_df)
 ################################################################################################################################
 
 # Create DFs with best bid results
-best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
-best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
+# # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
+# best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
 
 
-table_df = pd.concat([best_constant_bidding_df, best_random_bidding_df,best_linear_bid_df],1)
-table_df.columns = ['constant', 'random', 'linear']
+# # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
+# best_random_bidding_df = best_random_bidding_df.drop("constants")
+best_linear_bid_df = best_linear_bid_df.drop("bid")
+
+table_df = pd.concat([best_linear_bid_df],1)
+#table_df.columns = ['constant', 'random', 'linear']
+table_df.columns = ['linear']
 table_df = table_df.T
 #table_df.column = ['linear']
 print(table_df)
