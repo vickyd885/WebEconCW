@@ -105,3 +105,5 @@ ENV/
 datasets/
 part1/*.png
 *.csv
+
+xgboost
