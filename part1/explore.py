@@ -131,6 +131,7 @@ def create_and_save_ctr_graph(advertisers, topic, xlabel, ylabel, filename):
 
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
+    plt.legend()
     plt.savefig(filename)
 
     plt.gcf().clear()
@@ -158,14 +159,49 @@ def get_ctr(partial_df):
     return ctr
 
 
+def classify_useragents(raw_df):
 
-print_basic_stats_table()
+    # print("Total impressions: " , len(raw_df['click']))
+    #
+    # print("Total clicks: " , raw_df['click'].sum())
+    #
+    # print("avg ctr: " , raw_df['click'].sum() / len(raw_df['click']) )
+    #
+    #
+    # print("Total cost: ", raw_df['payprice'].sum() )
+    #
+    # print("Total CPC: ", raw_df['click'].sum() / raw_df['payprice'].sum() )
+    useragent_df = raw_df.groupby('useragent').size().reset_index(name='count').sort_values(by=['count'] , ascending=False)
 
-advertiser_list = [ 1458, 2259 ]
+
+    #print("total individual user_agents: " , len(useragent_df['useragent']))
+
+    user_df_f = useragent_df[:5]
+
+    for index, row in user_df_f.iterrows():
+        print(row['useragent'])
+        useragent_click_sum = raw_df[ raw_df['useragent'] == row['useragent']]['click'].sum()
+        print(useragent_click_sum)
+        print("CTR : " , useragent_click_sum / row['count'] )
+
+    print(user_df_f)
+
+
+
+
+# print_basic_stats_table()
+
+# advertiser_list = [ 1458 , 2997 ]
 
 # Create advertiser graphs
-create_and_save_ctr_graph(advertiser_list,'useragent','user agents', 'CTR', 'ctr_usergent.png')
-create_and_save_ctr_graph(advertiser_list,'region','Region', 'CTR', 'ctr_region.png')
-create_and_save_ctr_graph(advertiser_list,'adexchange','Adexchange', 'CTR', 'ctr_adexchange.png')
-create_and_save_ctr_graph(advertiser_list,'hour','Hour', 'CTR', 'ctr_hour.png')
-create_and_save_ctr_graph(advertiser_list,'weekday','Weekday', 'CTR', 'ctr_weekday.png')
+# create_and_save_ctr_graph(advertiser_list,'useragent','user agents', 'CTR', 'ctr_usergent.png')
+# create_and_save_ctr_graph(advertiser_list,'region','Region', 'CTR', 'ctr_region.png')
+# create_and_save_ctr_graph(advertiser_list,'adexchange','Adexchange', 'CTR', 'ctr_adexchange.png')
+# create_and_save_ctr_graph(advertiser_list,'hour','Hour', 'CTR', 'ctr_hour.png')
+# create_and_save_ctr_graph(advertiser_list,'weekday','Weekday', 'CTR', 'ctr_weekday.png')
+
+
+
+# Blue is first : Orange is: second
+
+classify_useragents(df)
