@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 
 from random import randint
 
-# Datasets
+#Datasets
 # validate_data = pd.read_csv("small_validation_100.csv")
 # training_data = pd.read_csv("small_train_100.csv")
 # testing_data = pd.read_csv("small_test_100.csv")
@@ -266,7 +266,7 @@ def linear_bidding(lower_limit, upper_limit, increment, predictions):
             #print("Base bid: %f, pCTR: %f, avg_ctr: %f",base_bid, predictions[i], avg_ctr)
             bid = base_bid * (predictions[i] / avg_ctr)
             bids.append(bid)
-            print("New bid: ", bid)
+            #print("New bid: ", bid)
 
     bid_groups = [bids[x:x+len(predictions)] for x in range(0, len(bids), len(predictions))]
     return bid_groups, base_bids
@@ -312,7 +312,7 @@ def evaluate_bid_strategy(strategy, prediction_Set):
     bid_groups = None
     results_df = pd.DataFrame()
 
-    if(strategy == "linear"):    
+    if(strategy == "linear"):
         min_value = 2
         max_value = 302
         increment = 2
@@ -355,7 +355,7 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 print("Starting linear bidding with LR")
 linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
-ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+# ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
 
 # print(linear_bidding_results_df)
 
@@ -366,11 +366,11 @@ ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
 # # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 # best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
-best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+# best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 
 # # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
 # best_random_bidding_df = best_random_bidding_df.drop("constants")
-best_linear_bid_df = best_linear_bid_df.drop("bid")
+#best_linear_bid_df = best_linear_bid_df.drop("bid")
 
 table_df = pd.concat([best_linear_bid_df],1)
 #table_df.columns = ['constant', 'random', 'linear']
@@ -380,4 +380,31 @@ table_df = table_df.T
 print(table_df)
 
 table_df.to_csv("initial_results.csv")
-best_ortb_bid_df.to_csv("ortb_result.csv")
+# best_ortb_bid_df.to_csv("ortb_result.csv")
+
+#### Creating the results file
+def create_test_file(base_bid, testing_predictions):
+    new_df = pd.DataFrame()
+    bids = []
+
+    for i in range(0,len(testing_predictions)):
+        bid = base_bid * (testing_predictions[i] / avg_ctr)
+        bids.append(bid)
+
+    new_df['bidid'] = testing_data['bidid']
+    new_df['bidprice'] = bids
+
+    new_df.to_csv("testing_bidding_price.csv", index=False)
+
+# predict for the test data
+testing_predictions = logistic.predict_proba(X_test)
+
+test_pCTR = pd.DataFrame(testing_predictions)
+
+# Normalise predictions
+testing_pred = []
+for p in test_pCTR[1]:
+    testing_pred.append( p / (p + ((1-p)/w)))
+
+print("Using base bid...", best_linear_bid_df['bid'])
+create_test_file(best_linear_bid_df['bid'], testing_pred)
