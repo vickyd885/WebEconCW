@@ -227,7 +227,7 @@ pCTR = pd.DataFrame(test_set_predictions_logistic)
 predictions = []
 
 a = len(training_data) / 2 * np.bincount(training_data.click)
-w = a[1] / a[0]
+w = float(a[1]) / float(a[0])
 
 for p in pCTR[1]:
     predictions.append( p / (p + ((1-p)/w)))
@@ -251,7 +251,7 @@ pd.DataFrame(predictions).to_csv("adjusted_pred_lr.csv")
 
 ################################################################################################################################
 
-avg_ctr = training_data['click'].sum() / len(training_data['bidid'])
+avg_ctr = float(training_data['click'].sum()) / float(len(training_data['bidid']))
 
 
 print("Total impressions: ", len(training_data['bidid']), " Total clicks: ",training_data['click'].sum() )
@@ -271,6 +271,23 @@ def linear_bidding(lower_limit, upper_limit, increment, predictions):
     bid_groups = [bids[x:x+len(predictions)] for x in range(0, len(bids), len(predictions))]
     return bid_groups, base_bids
 
+def ortb_bid_1(predictions):
+    bids_ortb = []
+    c_lambda = []
+
+    lambdas = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+    c_range = np.arange(10, 90, 10)
+
+    for c in c_range:
+        print(c)
+        for l in lambdas:
+            print(l)
+            c_lambda.append((c, l))
+            bid = np.sqrt((np.multiply(np.divide(c, l), predictions)) + np.square(c) - c)
+            bids_ortb.append(bid.tolist())
+
+    return bids_ortb, c_lambda
+
 def placing_bids(bids):
     impressions = 0
     clicks = 0
@@ -279,7 +296,7 @@ def placing_bids(bids):
     bool_check = bids >= validate_data.payprice
     for i in range(0, len(bids)):
         # Don't exceed budget
-        if cost >= budget:
+        if (cost + validate_data['payprice'][i]) >= budget:
         # print("Elapsed budget")
             break
 
@@ -292,23 +309,28 @@ def placing_bids(bids):
     return impressions, clicks, cost
 
 def evaluate_bid_strategy(strategy, prediction_Set):
-    min_value = 2
-    max_value = 302
-    increment = 2
-    print("Generating bids")
-    bid_groups, base_bids = linear_bidding(min_value,max_value,2,prediction_Set)
-    print("Finished generating bids")
+    bid_groups = None
+    results_df = pd.DataFrame()
+
+    if(strategy == "linear"):    
+        min_value = 2
+        max_value = 302
+        increment = 2
+        print("Generating bids")
+        linear_bid_groups, base_bids = linear_bidding(min_value,max_value,2,prediction_Set)
+        print("Finished generating bids")
+        results_df['bid'] = base_bids
+        bid_groups = linear_bid_groups
+    elif (strategy == "ortb"):
+        print("Generating ORTB bids")
+        ortb_bids, c_lambda = ortb_bid_1(prediction_Set)
+        print("Finished generating ORTB bids")
+        results_df['c', 'lambda'] = c_lambda
+        bid_groups = ortb_bids
 
     impressions = []
     total_clicks = []
     total_spent = []
-
-    results_df = pd.DataFrame()
-
-    results_df['bid'] = base_bids
-    #results_df['strategy'] = strategy
-
-    # print(results_df)
 
     for bids in bid_groups:
         [imps, clicks, cost] = placing_bids(bids)
@@ -331,8 +353,9 @@ def evaluate_bid_strategy(strategy, prediction_Set):
     return results_df
 
 
-print("starting linear bidding with LR")
+print("Starting linear bidding with LR")
 linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
+ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
 
 # print(linear_bidding_results_df)
 
@@ -343,7 +366,7 @@ linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
 # # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 # best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
-
+best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 
 # # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
 # best_random_bidding_df = best_random_bidding_df.drop("constants")
@@ -357,3 +380,4 @@ table_df = table_df.T
 print(table_df)
 
 table_df.to_csv("initial_results.csv")
+best_ortb_bid_df.to_csv("ortb_result.csv")
