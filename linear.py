@@ -288,6 +288,31 @@ def ortb_bid_1(predictions):
 
     return bids_ortb, c_lambda
 
+def ortb_bid_2(predictions):
+    bids_ortb = []
+    c_lambda = []
+
+    lambdas = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+    c_range = np.arange(10, 90, 10)
+
+    for c in c_range:
+        print(c)
+        for l in lambdas:
+            print(l)
+            c_lambda.append((c, l))
+
+            ################################################
+            # ORTB Winning Formula 2 Formula Breakdown #
+            ################################################
+            part1 = np.cbrt(np.divide(predictions + np.sqrt(np.multiply(np.square(c), np.square(l)) + np.square(predictions)), np.multiply(c, l)))
+            part2 = np.cbrt(np.divide(np.multiply(c, l), predictions + np.sqrt(np.multiply(np.square(c),np.square(l)) + np.square(predictions))))
+            form = part1 - part2
+            bid = np.dot(c, form)
+
+            bids_ortb.append(bid.tolist())
+
+    return bids_ortb, c_lambda
+
 def placing_bids(bids):
     impressions = 0
     clicks = 0
@@ -327,6 +352,12 @@ def evaluate_bid_strategy(strategy, prediction_Set):
         print("Finished generating ORTB bids")
         results_df['c', 'lambda'] = c_lambda
         bid_groups = ortb_bids
+    elif (strategy == "ortb2"):
+        print("Generating ORTB_2 bids")
+        ortb_bids, c_lambda = ortb_bid_2(prediction_Set)
+        print("Finished generating ORTB_2 bids")
+        results_df['c', 'lambda'] = c_lambda
+        bid_groups = ortb_bids
 
     impressions = []
     total_clicks = []
@@ -355,7 +386,8 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 print("Starting linear bidding with LR")
 linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
-# ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)
 
 # print(linear_bidding_results_df)
 
@@ -366,7 +398,8 @@ linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
 # # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 # best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
-# best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+best_ortb2_bid_df = ortb2_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 
 # # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
 # best_random_bidding_df = best_random_bidding_df.drop("constants")
@@ -380,6 +413,8 @@ table_df = table_df.T
 print(table_df)
 
 table_df.to_csv("initial_results.csv")
+best_ortb_bid_df.to_csv("ortb_result.csv")
+best_ortb2_bid_df.to_csv("ortb2_result.csv")
 # best_ortb_bid_df.to_csv("ortb_result.csv")
 
 #### Creating the results file
