@@ -279,9 +279,9 @@ def ortb_bid_1(predictions):
     c_range = np.arange(10, 90, 10)
 
     for c in c_range:
-        print(c)
+        #print(c)
         for l in lambdas:
-            print(l)
+            #print(l)
             c_lambda.append((c, l))
             bid = np.sqrt((np.multiply(np.divide(c, l), predictions)) + np.square(c) - c)
             bids_ortb.append(bid.tolist())
@@ -296,9 +296,9 @@ def ortb_bid_2(predictions):
     c_range = np.arange(10, 90, 10)
 
     for c in c_range:
-        print(c)
+        #print(c)
         for l in lambdas:
-            print(l)
+            #print(l)
             c_lambda.append((c, l))
 
             ################################################
@@ -309,7 +309,11 @@ def ortb_bid_2(predictions):
             form = part1 - part2
             bid = np.dot(c, form)
 
+
+
+
             bids_ortb.append(bid.tolist())
+
 
     return bids_ortb, c_lambda
 
@@ -385,8 +389,9 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 
 print("Starting linear bidding with LR")
-linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
-ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+#linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
+#ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+
 ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)
 
 # print(linear_bidding_results_df)
@@ -397,28 +402,28 @@ ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)
 # Create DFs with best bid results
 # # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 # best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
-best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
-best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+#best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
+#best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 best_ortb2_bid_df = ortb2_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 
 # # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
 # best_random_bidding_df = best_random_bidding_df.drop("constants")
 #best_linear_bid_df = best_linear_bid_df.drop("bid")
 
-table_df = pd.concat([best_linear_bid_df],1)
+table_df = pd.concat([best_ortb2_bid_df],1)
 #table_df.columns = ['constant', 'random', 'linear']
-table_df.columns = ['linear']
+table_df.columns = ['ortb2']
 table_df = table_df.T
 #table_df.column = ['linear']
 print(table_df)
 
 table_df.to_csv("initial_results.csv")
-best_ortb_bid_df.to_csv("ortb_result.csv")
+#best_ortb_bid_df.to_csv("ortb_result.csv")
 best_ortb2_bid_df.to_csv("ortb2_result.csv")
 # best_ortb_bid_df.to_csv("ortb_result.csv")
 
 #### Creating the results file
-def create_test_file(base_bid, testing_predictions):
+def create_test_file_linear(base_bid, testing_predictions):
     new_df = pd.DataFrame()
     bids = []
 
@@ -431,6 +436,28 @@ def create_test_file(base_bid, testing_predictions):
 
     new_df.to_csv("testing_bidding_price.csv", index=False)
 
+
+def create_test_file_ortb(c, l, testing_predictions, version):
+
+    new_df = pd.DataFrame()
+    bids = []
+
+    if version == 1: # use ortb1
+        bid = np.sqrt((np.multiply(np.divide(c, l), testing_predictions)) + np.square(c) - c)
+        bids = bid.tolist()
+    else: #use ortb2
+        part1 = np.cbrt(np.divide(testing_predictions + np.sqrt(np.multiply(np.square(c), np.square(l)) + np.square(testing_predictions)), np.multiply(c, l)))
+        part2 = np.cbrt(np.divide(np.multiply(c, l), testing_predictions + np.sqrt(np.multiply(np.square(c),np.square(l)) + np.square(testing_predictions))))
+        form = part1 - part2
+        bid = np.dot(c, form)
+        bids = bid.tolist()
+
+    new_df['bidid'] = testing_data['bidid']
+    new_df['bidprice'] = bids
+
+    new_df.to_csv("testing_bidding_price_ortb" + str(version) + ".csv", index=False)
+
+
 # predict for the test data
 testing_predictions = logistic.predict_proba(X_test)
 
@@ -441,5 +468,9 @@ testing_pred = []
 for p in test_pCTR[1]:
     testing_pred.append( p / (p + ((1-p)/w)))
 
-print("Using base bid...", best_linear_bid_df['bid'])
-create_test_file(best_linear_bid_df['bid'], testing_pred)
+#print("Using base bid...", best_linear_bid_df['bid'])
+#create_test_file_linear(best_linear_bid_df['bid'], testing_pred)
+
+c = best_ortb2_bid_df['c','lambda'][0]
+l = best_ortb2_bid_df['c','lambda'][1]
+create_test_file_ortb(c, l, testing_pred, 2)
