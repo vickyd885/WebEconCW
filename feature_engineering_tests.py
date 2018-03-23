@@ -40,6 +40,17 @@ def group_slot_prices(raw_df):
     raw_df = raw_df.drop('slotprice', axis=1)
     return raw_df
 
+def add_grouped_user_tags(encoded_df):
+    tags_df = pd.DataFrame(encoded_df.usertag.astype(str).str.split(',').tolist())
+    print(tags_df)
+    usertag_df = pd.DataFrame(tags_df)
+    print(usertag_df)
+    usertag_df2 = pd.get_dummies(usertag_df,prefix='usertag')
+    usertag_df2 = usertag_df2.groupby(usertag_df2.columns, axis=1).sum()
+    encoded_df = pd.concat([encoded_df, usertag_df2], axis=1)
+    encoded_df = encoded_df.drop('usertag', axis=1)
+    return encoded_df
+
 def preprocess(raw_df):
     p_df = extract_useragent_data(raw_df)
     p_df = group_slot_prices(p_df)
@@ -58,10 +69,11 @@ testing_data = preprocess(testing_data)
 features = [ 'weekday', 'hour',
 'region', 'city',
  'slotwidth', 'slotheight', 'slotvisibility',
-'slotformat','advertiser', 'adexchange', 'slotprice_brackets', 'os', 'browser']
+'slotformat','advertiser', 'adexchange', 'slotprice_brackets', 'os', 'browser',
+'usertag']
 
 ## Fails on
-# adexchange, usertag
+# usertag
 
 
 # Get a list of columns to delete from the dataset
@@ -86,8 +98,12 @@ def encode_df(raw_df):
     print("LIST HERE")
     print(list(encoded_df))
     for field in features:
-        encoded_df = pd.concat([encoded_df,pd.get_dummies(encoded_df[field],prefix=field)],axis=1)
-        encoded_df = encoded_df.drop(field,axis=1)
+        if field == 'usertag':
+            encoded_df = add_grouped_user_tags(encoded_df)
+            continue
+        else:
+            encoded_df = pd.concat([encoded_df,pd.get_dummies(encoded_df[field],prefix=field)],axis=1)
+            encoded_df = encoded_df.drop(field,axis=1)
 
     return encoded_df
 
@@ -108,15 +124,9 @@ print(list(X_train))
 # Declare the logistic model
 logistic = linear_model.LogisticRegression(class_weight='balanced', C = 0.001)
 
-# Fit the data
-ysef = [x for x in list(X_train) if x not in X_validate]
-print(ysef)
 
 logistic.fit(X_train, Y_train)
 
-# Print accuracy by testing against validation set
-print('Logistic Regression Accuracy: %f'
-      % logistic.score(X_validate, Y_validate))
 
 
 test_set_predictions_logistic = logistic.predict_proba(X_validate)
@@ -130,6 +140,10 @@ w = float(a[1]) / float(a[0])
 
 for p in pCTR[1]:
     predictions.append( p / (p + ((1-p)/w)))
+
+
+fpr, tpr, thresholds = metrics.roc_curve([click for click in validate_data.click], predictions)
+print('Logistic regression accuracy:',metrics.auc(fpr, tpr))
 
 
 
@@ -164,6 +178,8 @@ def linear_bidding(lower_limit, upper_limit, increment, predictions):
             bid = base_bid * (predictions[i] / avg_ctr)
             bids.append(bid)
             #print("New bid: ", bid)
+
+
 
     bid_groups = [bids[x:x+len(predictions)] for x in range(0, len(bids), len(predictions))]
     return bid_groups, base_bids
