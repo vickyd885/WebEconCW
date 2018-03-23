@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer, MultiLabelBinarizer
 from sklearn import linear_model, neighbors
 from sklearn.metrics import accuracy_score
+from sklearn import metrics
 
 from random import randint
 import random
@@ -19,9 +20,9 @@ from xgboost import XGBClassifier, XGBRegressor
 # training_data = pd.read_csv("small_train_100.csv")
 # testing_data = pd.read_csv("small_test_100.csv")
 
-validate_data = pd.read_csv("validation.csv")
-training_data = pd.read_csv("datasets/we_data/train.csv")
-testing_data = pd.read_csv("datasets/we_data/test.csv")
+validate_data = pd.read_csv("datasets/we_data/small_validation.csv")
+training_data = pd.read_csv("datasets/we_data/small_train.csv")
+testing_data = pd.read_csv("datasets/we_data/small_test.csv")
 
 
 # Initial Preprocessing to make the datasets feature encodable
@@ -302,10 +303,10 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 
 print("Starting linear bidding with LR")
-linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
-#ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
+#linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
+ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
 
-#ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)
+ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)
 
 # print(linear_bidding_results_df)
 
@@ -315,17 +316,19 @@ linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
 # Create DFs with best bid results
 # # best_constant_bidding_df = constant_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
 # best_random_bidding_df = random_bidding_results.sort_values(by=['clicks'] , ascending=False).iloc[0]
-best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
-#best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
-#best_ortb2_bid_df = ortb2_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+#best_linear_bid_df = linear_bidding_results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
+best_ortb_bid_df = ortb_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
+best_ortb2_bid_df = ortb2_bidding_results_df.sort_values(by=['clicks'], ascending=False).iloc[0]
 
+print(best_ortb_bid_df)
+print(best_ortb2_bid_df)
 # # best_constant_bidding_df = best_constant_bidding_df.drop("constants")
 # best_random_bidding_df = best_random_bidding_df.drop("constants")
 #best_linear_bid_df = best_linear_bid_df.drop("bid")
 
-table_df = pd.concat([best_linear_bid_df],1)
+table_df = pd.concat([best_ortb_bid_df, best_ortb2_bid_df],1)
 #table_df.columns = ['constant', 'random', 'linear']
-table_df.columns = ['ortb2']
+table_df.columns = ['ortb1','ortb2']
 table_df = table_df.T
 #table_df.column = ['linear']
 print(table_df)
