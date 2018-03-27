@@ -23,7 +23,7 @@ from sklearn.metrics import auc,roc_curve
 # training_data = pd.read_csv("small_train_100.csv")
 # testing_data = pd.read_csv("small_test_100.csv")
 
-validate_data = pd.read_csv("validation.csv")
+validate_data = pd.read_csv("datasets/we_data/validation.csv")
 training_data = pd.read_csv("datasets/we_data/train.csv")
 testing_data = pd.read_csv("datasets/we_data/test.csv")
 
@@ -45,7 +45,7 @@ def group_slot_prices(raw_df):
     return raw_df
 
 def add_grouped_user_tags(encoded_df):
-    tags_df = pd.DataFrame(encoded_df.usertag.str.split(',').tolist())
+    tags_df = pd.DataFrame(encoded_df.usertag.astype(str).str.split(',').tolist())
     print(tags_df)
     usertag_df = pd.DataFrame(tags_df)
     print(usertag_df)
@@ -73,7 +73,7 @@ testing_data = preprocess(testing_data)
 features = [ 'weekday', 'hour',
 'region', 'city',
  'slotwidth', 'slotheight', 'slotvisibility',
-'slotformat','advertiser', 'adexchange', 'slotprice_brackets', 'os', 'browser']
+'slotformat','advertiser', 'adexchange', 'slotprice_brackets', 'os', 'browser', 'usertag']
 
 ## Fails on
 # usertag
@@ -96,13 +96,17 @@ def encode_df(raw_df):
 
 
     encoded_df = delete_unused_columns(raw_df) # removes unused fields
+    label_encoder = LabelBinarizer() # Uses SKLearn Label Binary Encoder
 
     print("LIST HERE")
     print(list(encoded_df))
     for field in features:
-
-        encoded_df = pd.concat([encoded_df,pd.get_dummies(encoded_df[field],prefix=field)],axis=1)
-        encoded_df = encoded_df.drop(field,axis=1)
+        if field == 'usertag':
+            encoded_df = add_grouped_user_tags(encoded_df)
+            continue
+        else:
+            encoded_df = pd.concat([encoded_df,pd.get_dummies(encoded_df[field],prefix=field)],axis=1)
+            encoded_df = encoded_df.drop(field,axis=1)
 
     return encoded_df
 

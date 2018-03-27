@@ -123,7 +123,7 @@ print(list(X_train))
 
 ####
 # Declare the logistic model
-logistic = linear_model.LogisticRegression(class_weight=None, C = 0.001)
+logistic = linear_model.LogisticRegression(class_weight='balanced', C = 0.001)
 
 
 logistic.fit(X_train, Y_train)
@@ -145,6 +145,13 @@ for p in pCTR[1]:
 
 fpr, tpr, thresholds = metrics.roc_curve([click for click in validate_data.click], predictions)
 print('Logistic regression accuracy:',metrics.auc(fpr, tpr))
+
+
+xgbd = XGBRegressor()
+
+xgbd.fit(X_train, Y_train)
+
+y_pred = xgdb.predict(X_validate)
 
 
 
@@ -303,7 +310,7 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
 
 print("Starting linear bidding with LR")
-linear_bidding_results_df = evaluate_bid_strategy("linear", predictions)
+linear_bidding_results_df = evaluate_bid_strategy("lift", y_pred)
 #ortb_bidding_results_df = evaluate_bid_strategy("ortb", predictions)
 
 #ortb2_bidding_results_df = evaluate_bid_strategy("ortb2", predictions)

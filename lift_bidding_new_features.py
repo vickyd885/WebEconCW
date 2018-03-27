@@ -14,6 +14,7 @@ from sklearn import metrics
 from random import randint
 import random
 import xgboost as xgb
+from xgboost import XGBClassifier, XGBRegressor
 
 
 class DataFrameImputer(TransformerMixin):
@@ -31,7 +32,7 @@ class DataFrameImputer(TransformerMixin):
 # training_data = pd.read_csv("small_train_100.csv")
 # testing_data = pd.read_csv("small_test_100.csv")
 
-validate_data = pd.read_csv("validation.csv")
+validate_data = pd.read_csv("datasets/we_data/validation.csv")
 training_data = pd.read_csv("datasets/we_data/train.csv")
 testing_data = pd.read_csv("datasets/we_data/test.csv")
 
@@ -65,7 +66,7 @@ list_of_group_users = list(groupable_users['userid'])
 
 group_data = training_data[training_data['userid'].isin(list_of_group_users)]
 
-#training_data = group_data
+training_data = group_data
 
 # print(training_data)
 # Initial Preprocessing to make the datasets feature encodable
@@ -90,9 +91,15 @@ def preprocess(raw_df):
     #print(list(p_df))
     return p_df
 
+
 training_data = preprocess(training_data)
 validate_data = preprocess(validate_data)
 testing_data = preprocess(testing_data)
+
+avg_ctr = float(training_data['click'].sum()) / float(len(training_data['bidid']))
+
+print(avg_ctr)
+
 
 print("FINISHED PREPROCESSING")
 
@@ -157,21 +164,21 @@ Y_validate = validate_data.click
 print("Finish feature encoding")
 # most frequent user = 5ac7ec84bb700b7a6bd1c57b1ae7c269af65850b
 
-model = xgb.XGBClassifier()
+model = XGBRegressor()
 
 model = model.fit(X_train, Y_train)
 
-y_pred = model.predict_proba(X_validate)
-fpr, tpr , thresholds = metrics.roc_curve(Y_validate,y_pred[1])
-metrics.auc(fpr, tpr)
+y_pred = model.predict(X_validate)
+fpr, tpr , thresholds = metrics.roc_curve(Y_validate,y_pred)
+print(metrics.auc(fpr, tpr))
 
 # predictions_t = [round(value) for value in y_pred]
 # accuracy = accuracy_score(Y_validate, predictions_t)
 # print("Accuracy: %.2f%%" % (accuracy * 100.0))
 
 
-
-a = len(training_data) / 2 * np.bincount(training_data.click)
+"""
+a = len() / 2 * np.bincount(training_data.click)
 w = a[1] / a[0]
 #
 predictions = []
@@ -179,13 +186,13 @@ for p in pd_df[1]:
     predictions.append( p / (p + ((1-p)/w)))
 
 print(predictions)
-
+"""
 #####
 
-avg_ctr = training_data['click'].sum() / len(training_data['bidid'])
-avg_cpc = training_data['payprice'].sum() /  training_data['click'].sum()
+
+avg_cpc = float(training_data['payprice'].sum() /  training_data['click'].sum())
 print("Avg CPC: ", avg_cpc)
-print("Avg CTR: ", avg_ctr)
+print("Avg CTR: ",avg_ctr)
 
 def lift_bidding(lower_limit, upper_limit, increment, predictions):
     base_bids = np.arange(lower_limit, upper_limit, increment)
@@ -194,7 +201,7 @@ def lift_bidding(lower_limit, upper_limit, increment, predictions):
     for base_bid in base_bids:
         for i in range(0, len(predictions)):
             #print("Base bid: %f, pCTR: %f, avg_ctr: %f",base_bid, predictions[i], avg_ctr)
-            bid = base_bid * (predictions[i] * avg_cpc )
+            bid = base_bid * float(predictions[i] / avg_ctr )
             bids.append(bid)
             #print("Prediction: ", predictions[i])
             #print("New bid rn: ", bid)
@@ -264,7 +271,7 @@ def evaluate_bid_strategy(strategy, prediction_Set):
 
     return results_df
 
-results_df = evaluate_bid_strategy("lift bidding", predictions)
+results_df = evaluate_bid_strategy("lift bidding", y_pred)
 
 
 best_lift_bid_df = results_df.sort_values(by=['clicks'] , ascending=False).iloc[0]
