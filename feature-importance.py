@@ -117,6 +117,28 @@ indices = np.argsort(important_features)[::-1]
 
 # Print the feature ranking
 print("Feature ranking:")
-
+important_list = []
 for f in range(X_train.shape[1]):
     print("%d. feature %d (%f)" % (f + 1, indices[f], important_features[indices[f]]))
+    # print("%s" % X_train.columns[[important_features[indices[f]]]])
+    important_list.append([indices[f],important_features[indices[f]]])
+
+
+
+plt.figure()
+plt.title("Feature importances")
+
+imp_df = pd.DataFrame(important_list)
+imp_df.columns = ['Feature','Importance %']
+imp_df[:20].plot(kind='bar', x='Feature', color='b', title='Top 10 Feature Importance')
+plt.savefig("feature_importances_most_important.png")
+
+plt.figure()
+plt.title("Feature importances")
+imp_df[200:].plot(kind='bar', x='Feature', color='r', title='Bottom 10 Feature Importance')
+plt.savefig("feature_importances_least_important.png")
+
+
+all_features_df = pd.DataFrame(imp_df)
+all_features_df['Feature names'] = X_train.columns[[imp_df['Feature']]]
+print(all_features_df)
