@@ -3,13 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-validate_data = pd.read_csv("small_validation_100.csv")
-training_data = pd.read_csv("small_train_100.csv")
-testing_data = pd.read_csv("small_test_100.csv")
+validate_data = pd.read_csv("datasets/we_data/small_validation_100.csv")
+training_data = pd.read_csv("datasets/we_data/small_train_100.csv")
+testing_data = pd.read_csv("datasets/we_data/small_test_100.csv")
 
-# validate_data = pd.read_csv("datasets/we_data/validation.csv")
-# training_data = pd.read_csv("datasets/we_data/train.csv")
-# testing_data = pd.read_csv("datasets/we_data/test.csv")
+#validate_data = pd.read_csv("datasets/we_data/validation.csv")
+#training_data = pd.read_csv("datasets/we_data/train.csv")
+#testing_data = pd.read_csv("datasets/we_data/test.csv")
 
 
 
@@ -114,31 +114,49 @@ std = np.std([tree.feature_importances_ for tree in forest.estimators_],
 
 indices = np.argsort(important_features)[::-1]
 
+print(important_features)
+
 
 # Print the feature ranking
 print("Feature ranking:")
 important_list = []
 for f in range(X_train.shape[1]):
-    print("%d. feature %d (%f)" % (f + 1, indices[f], important_features[indices[f]]))
+    #print("%d. feature %d (%f)" % (f + 1, indices[f], important_features[indices[f]]))
     # print("%s" % X_train.columns[[important_features[indices[f]]]])
+    #print(important_features[indices[f]])
     important_list.append([indices[f],important_features[indices[f]]])
 
 
+list_size = len(important_list)
 
+print("List size:, ", len(important_list))
+plt.rcParams["figure.figsize"] = [16,9]
 plt.figure()
+
 plt.title("Feature importances")
 
 imp_df = pd.DataFrame(important_list)
-imp_df.columns = ['Feature','Importance %']
-imp_df[:20].plot(kind='bar', x='Feature', color='b', title='Top 10 Feature Importance')
-plt.savefig("feature_importances_most_important.png")
 
-plt.figure()
-plt.title("Feature importances")
-imp_df[200:].plot(kind='bar', x='Feature', color='r', title='Bottom 10 Feature Importance')
-plt.savefig("feature_importances_least_important.png")
-
-
+imp_df.columns = ['Feature id', 'Importance %']
 all_features_df = pd.DataFrame(imp_df)
-all_features_df['Feature names'] = X_train.columns[[imp_df['Feature']]]
-print(all_features_df)
+all_features_df['Feature names'] = X_train.columns[[imp_df['Feature id']]]
+print("Top 15!")
+print(all_features_df[:15])
+
+print("Bottom!")
+print(all_features_df[list_size-30:])
+
+#all_features_df.sort_values(by=['Importance %'])
+
+#all_features_df.columns = ['Feature','Importance %']
+all_features_df[:15].plot(kind='bar', x='Feature names', y='Importance %', color='b', title='Top 15 Feature Importance', legend=False)
+plt.ylabel("Importance %")
+plt.savefig("feature_importances_most_important.png", dpi=1000)
+
+plt.figure(figsize=(50,20))
+plt.title("Feature importances")
+plt.ylabel("Importance %")
+all_features_df[list_size-15:].plot(kind='bar', x='Feature names',y='Importance %', color='r', title='Bottom 15 Feature Importance', legend=False)
+plt.savefig("feature_importances_least_important.png", dpi=1000)
+
+
