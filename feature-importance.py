@@ -3,13 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-validate_data = pd.read_csv("datasets/we_data/small_validation_100.csv")
-training_data = pd.read_csv("datasets/we_data/small_train_100.csv")
-testing_data = pd.read_csv("datasets/we_data/small_test_100.csv")
+#validate_data = pd.read_csv("datasets/we_data/small_validation_100.csv")
+#training_data = pd.read_csv("datasets/we_data/small_train_100.csv")
+#testing_data = pd.read_csv("datasets/we_data/small_test_100.csv")
 
-#validate_data = pd.read_csv("datasets/we_data/validation.csv")
-#training_data = pd.read_csv("datasets/we_data/train.csv")
-#testing_data = pd.read_csv("datasets/we_data/test.csv")
+validate_data = pd.read_csv("datasets/we_data/validation.csv")
+training_data = pd.read_csv("datasets/we_data/train.csv")
+testing_data = pd.read_csv("datasets/we_data/test.csv")
 
 
 
@@ -144,7 +144,7 @@ print("Top 15!")
 print(all_features_df[:15])
 
 print("Bottom!")
-print(all_features_df[list_size-30:])
+print(all_features_df[list_size-100:])
 
 #all_features_df.sort_values(by=['Importance %'])
 
