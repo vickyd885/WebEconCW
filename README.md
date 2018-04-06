@@ -22,21 +22,26 @@ Initial data exploration is in `/part1`
 
 ## Part 1: Data exploration
 
+Found in '/part1'
+
 ```python
 python explore.py
 ```
 
-Includes:
-- Basic stats (num Imps, num Clicks, Cost, CTR, avg CPM, eCPC )
-- CTR/Weekday Graph
-- CTR/Hour Graph
-- CTR/Browser Graph
-- CTR/Region Graph
-- CTR/Ad Exchange Graph
+## Part 2: Constant and Random Bidding
 
-Graphs are saved in `part1/`
+Found in '/part2'
 
-## Running the Neural Network
+## Part 3: Linear Bidding
+
+```
+Logistic regression: linear_bidding.py
+Feature engineering: feature_engineering_tests.py
+Feature importance: feature-importance.py
+Logistic regression fine tuning: lr_fine_tuning.py
+```
+
+### Running the Neural Network
 To run the bidding strategies with Deep Neural Network pCTR estimation, run as follows:
 
 ```python
@@ -44,3 +49,20 @@ python run_neural_network.py
 ```
 
 **NOTE** : Ensure the *h5py* Python package is installed to load the Neural Network checkpoint *neural_bid_model.h5* from the current working directory and avoid re-training the model. Also ensure the datasets *validation.csv* and *test.csv* are within the current working directory.
+
+# Part 4: Non-linear bidding
+
+### ORTB
+
+Found in `ortb.py` (and also in `linear_bidding.py`)
+
+### Lift Bidding
+
+Found in `lift_bidding.py`
+
+### GDBT
+
+Found in `XGB.py`
+
+# Part 5:
+Found in `combined_strategy.py`
