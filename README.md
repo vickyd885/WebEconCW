@@ -35,3 +35,12 @@ Includes:
 - CTR/Ad Exchange Graph
 
 Graphs are saved in `part1/`
+
+## Running the Neural Network
+To run the bidding strategies with Deep Neural Network pCTR estimation, run as follows:
+
+```python
+python run_neural_network.py
+```
+
+**NOTE** : Ensure the *h5py* Python package is installed to load the Neural Network checkpoint *neural_bid_model.h5* from the current working directory and avoid re-training the model. Also ensure the datasets *validation.csv* and *test.csv* are within the current working directory.
